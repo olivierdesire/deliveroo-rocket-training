@@ -1,6 +1,6 @@
 import "./App.css";
 import axios from "axios";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 // Components
 import Category from "./components/Category";
 import Cart from "./components/Cart";
@@ -10,6 +10,9 @@ const calculateTotal = (cart) => {
   for (let i = 0; i < cart.length; i++) {
     total = total + cart[i].quantity * cart[i].price;
   }
+  // ajout ODE
+  console.log("total", total);
+  // ajout ODE
   return total;
 };
 
@@ -18,6 +21,9 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [cart, setCart] = useState([]);
   const [theme, setTheme] = useState("white");
+  const [search, setSearch] = useState("");
+
+  const myInput = useRef();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,39 +37,53 @@ function App() {
         console.log(error.message);
       }
     };
+
     fetchData();
   }, []);
 
-  const handleAddToCart = (meal) => {
+  const handleAddToCart = useCallback((meal) => {
     // const cartCopy = [...cart];
     // const mealPresent = cartCopy.find((elem) => elem.id === meal.id);
     // if (mealPresent) mealPresent.quantity++;
     // else cartCopy.push({ ...meal, quantity: 1 });
     // setCart(cartCopy);
     setCart((prev) => {
-      const prevCart = [...prev];
+      const prevCart = structuredClone(prev);
       const mealPresent = prevCart.find((elem) => elem.id === meal.id);
       if (mealPresent) mealPresent.quantity++;
       else prevCart.push({ ...meal, quantity: 1 });
       return prevCart;
     });
-  };
+  }, []);
 
-  const handleRemoveFromCart = (meal) => {
-    const cartCopy = [...cart];
-    const mealPresent = cartCopy.find((elem) => elem.id === meal.id);
-    if (mealPresent.quantity === 1) {
-      const index = cartCopy.indexOf(mealPresent);
-      cartCopy.splice(index, 1);
-    } else {
-      mealPresent.quantity--;
-    }
-    setCart(cartCopy);
-  };
+  const handleRemoveFromCart = useCallback((meal) => {
+    // const cartCopy = [...cart];
+    // const mealPresent = cartCopy.find((elem) => elem.id === meal.id);
+    // if (mealPresent.quantity === 1) {
+    //   const index = cartCopy.indexOf(mealPresent);
+    //   cartCopy.splice(index, 1);
+    // } else {
+    //   mealPresent.quantity--;
+    // }
+    // setCart(cartCopy);
+    setCart((prev) => {
+      const prevCart = structuredClone(prev);
+      const mealPresent = prevCart.find((elem) => elem.id === meal.id);
+      if (mealPresent.quantity === 1) {
+        const index = prevCart.indexOf(mealPresent);
+        prevCart.splice(index, 1);
+      } else {
+        mealPresent.quantity--;
+      }
+      return prevCart;
+    });
+  }, []);
 
-  let total = calculateTotal(cart);
+  // let total = calculateTotal(cart);
 
   // ajout ODE
+  let total = useMemo(() => calculateTotal(cart), [cart]);
+
   console.log("Component App render...");
   // Fin ajout
 
@@ -89,6 +109,15 @@ function App() {
       <div className="content">
         <div className="container sections-container">
           <section className="left-section">
+            <input
+              type="text"
+              id="search"
+              value={search}
+              onChange={(e) => {
+                e.target.value;
+              }}
+              ref={myInput}
+            />
             {data.categories.map((category, index) => {
               if (category.meals.length !== 0) {
                 return (
@@ -112,6 +141,14 @@ function App() {
             />
           </section>
         </div>
+        <button
+          onClick={() => {
+            myInput.current.focus();
+          }}
+        >
+          {" "}
+          Cliquez ici
+        </button>
       </div>
     </div>
   );
